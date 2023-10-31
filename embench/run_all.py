@@ -198,6 +198,53 @@ fosdem_rv32_llvm_opt_runset = {
     ]
 }
 
+hightec_rv32_llvm_opt_runset = {
+    'name' : 'HighTec RV32IMAFDC optimization comparison',
+    'speed benchmark' : {
+        'timeout' : 1800,
+        'arglist' : [
+            'python3',
+            './benchmark_speed.py',
+            '--target-module=run_spike',
+        ],
+        'desc' : 'run'
+    },
+    'runs' : [
+        { 'name' : 'tbd-this-run-name',
+          'arch' : 'riscv32',
+          'chip' : 'generic',
+          'board' : 'spike',
+          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
+          'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
+          'ldflags' : '-mabi=ilp32d',
+          'path' : 'install-llvm',
+        },
+    ]
+}
+hightec_rv32_gcc_opt_runset = {
+    'name' : 'HighTec RV32IMAFDC optimization comparison',
+    'speed benchmark' : {
+        'timeout' : 1800,
+        'arglist' : [
+            'python3',
+            './benchmark_speed.py',
+            '--target-module=run_spike',
+        ],
+        'desc' : 'run'
+    },
+    'runs' : [
+        { 'name' : 'tbd-this-run-name',
+          'arch' : 'riscv32',
+          'chip' : 'generic',
+          'board' : 'spike',
+          'cc' : 'riscv32-none-elf-gcc',
+          'cflags' : '-nostartfiles -nodefaultlibs -O3 -march=rv32gc -mabi=ilp32d',
+          'ldflags' : '-mabi=ilp32d',
+          'path' : 'install-llvm',
+        },
+    ]
+}
+
 fosdem_arm_gcc_opt_runset = {
     'name' : 'FOSDEM Arm Cortex M4 optimization comparison',
     'size benchmark' : {
@@ -1187,6 +1234,16 @@ def build_parser():
         action='store_true',
         help='Run Arm GCC version comparison benchmarks'
     )
+    parser.add_argument(
+        '--hightec',
+        action='store_true',
+        help='Run HighTec benchmarks'
+    )
+    parser.add_argument(
+        '--hightec-gcc',
+        action='store_true',
+        help='Run HighTec benchmarks'
+    )
 
     return parser
 
@@ -1300,10 +1357,13 @@ def benchmark(arglist, timeout, desc, resfile, append):
                 if not 'All benchmarks ' + desc + ' successfully' in line:
                     fileh.writelines(line)
             fileh.close()
+    else:
+      print(res.stdout.decode('utf-8'))
+      print(res.stderr.decode('utf-8'))
 
 
 def main():
-    """Main program to drive building of benchmarks."""
+    """Main program to drive running of benchmarks."""
 
     # Parse arguments using standard technology
     parser = build_parser()
@@ -1333,6 +1393,10 @@ def main():
         runsets.append(gcc9_arch_runset)
     if args.arm_gcc_version:
         runsets.append(arm_gcc_version_runset)
+    if args.hightec:
+        runsets.append(hightec_rv32_llvm_opt_runset)
+    if args.hightec_gcc:
+        runsets.append(hightec_rv32_gcc_opt_runset)
 
     if not runsets:
         print("ERROR: No run sets specified")
