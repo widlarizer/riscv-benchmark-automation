@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10.2)
+enable_language(ASM)
 project(audiomark
 	DESCRIPTION "Firmware for the AudoMark Self-Hosted Benchmark"
 	LANGUAGES C
@@ -60,6 +61,10 @@ set(TH_SOURCE
 
 	${PORT_SOURCE}
 )
+
+if(LINKER_SCRIPT)
+	add_link_options(-T${LINKER_SCRIPT})
+endif()
 
 set(TEST_AEC_F32_SOURCE
 	src/ee_aec_f32.c

@@ -27,6 +27,8 @@
 #if defined __PERF_COUNTER__
 #include "perf_counter.h"
 #endif
+#elif defined __riscv
+extern uint64_t get_system_us();
 #else
 #error "Operating system not recognized"
 #endif
@@ -50,6 +52,8 @@ th_microseconds(void)
     ftime(&t);
     usec = ((uint64_t)t.time) * 1000 * 1000 + ((uint64_t)t.millitm) * 1000;
 #elif defined __arm__ && defined __PERF_COUNTER__
+    usec = (uint64_t)get_system_us();
+#elif defined __riscv && defined __PERF_COUNTER__
     usec = (uint64_t)get_system_us();
 #else
 #error "Operating system not recognized"
@@ -139,5 +143,6 @@ main(void)
     printf("Score            : %f AudioMarks\n", score);
 exit:
     ee_audiomark_release();
+    exit(err);
     return err ? -1 : 0;
 }
