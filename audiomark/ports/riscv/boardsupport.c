@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 unsigned long long start;
 extern void _exit(int i);
@@ -21,8 +22,12 @@ uint64_t get_system_us ()
     unsigned long lo = read_csr(mcycle);
     return (unsigned long long)(((CORETIMETYPE)hi) << 32) | lo;
 }
-
+void terminate()
+{
+    _exit(0);
+}
 void __attribute__ ((noinline))
 initialise_board ()
 {
+    atexit(terminate);
 }

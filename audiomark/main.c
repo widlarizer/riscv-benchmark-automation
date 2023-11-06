@@ -97,6 +97,7 @@ main(void)
         return -1;
     }
 
+    #ifndef SPIKE
     printf("Computing run speed\n");
 
     do
@@ -114,12 +115,16 @@ main(void)
         printf("Failed to compute iteration speed\n");
         goto exit;
     }
-
+    #endif
     // Must run for 10 sec. or at least 10 iterations
     float scale = 11e6 / dt;
     iterations  = (uint32_t)((float)iterations * scale);
     iterations  = iterations < 10 ? 10 : iterations;
-
+    #ifdef SPIKE
+    iterations = 1; // spike hack to reduce sim time
+    // Originally the 10 iteration minimum must have been to exhaust caches.
+    // But on a 1 IPC ISA simulator like Spike, this makes no difference.
+    #endif
     printf("Measuring\n");
 
     err = time_audiomark_run(iterations, &dt);

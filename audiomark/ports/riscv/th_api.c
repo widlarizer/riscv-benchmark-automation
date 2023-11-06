@@ -59,16 +59,17 @@ th_malloc(size_t size, int req)
 void
 th_free(void *mem, int req)
 {
-    switch (req)
-    {
-        // The system integrator can assign working memory wherever they like
-        case COMPONENT_BMF:
-        case COMPONENT_AEC:
-        case COMPONENT_ANR:
-        case COMPONENT_KWS:
-        default:
-            free(mem);
-    }
+    return; // FIXME For some reason this was crashing so it's commented out
+    // switch (req)
+    // {
+    //     // The system integrator can assign working memory wherever they like
+    //     case COMPONENT_BMF:
+    //     case COMPONENT_AEC:
+    //     case COMPONENT_ANR:
+    //     case COMPONENT_KWS:
+    //     default:
+    //         free(mem);
+    // }
 }
 
 void *
