@@ -198,8 +198,8 @@ fosdem_rv32_llvm_opt_runset = {
     ]
 }
 
-hightec_rv32_llvm_opt_runset = {
-    'name' : 'HighTec RV32IMAFDC optimization comparison',
+hightec_rv32_llvm_speed_runset = {
+    'name' : 'HighTec RV32GC LLVM speed comparison',
     'speed benchmark' : {
         'timeout' : 1800,
         'arglist' : [
@@ -210,11 +210,33 @@ hightec_rv32_llvm_opt_runset = {
         'desc' : 'run'
     },
     'runs' : [
-        { 'name' : 'tbd-this-run-name',
+        { 'name' : 'htc-clang-speed',
           'arch' : 'riscv32',
           'chip' : 'generic',
           'board' : 'spike',
-          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
+          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
+          'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
+          'ldflags' : '-mabi=ilp32d',
+          'path' : 'install-llvm',
+        },
+    ]
+}
+hightec_rv32_llvm_size_runset = {
+    'name' : 'HighTec RV32GC LLVM size optimization comparison',
+    'speed benchmark' : {
+        'timeout' : 1800,
+        'arglist' : [
+            'python3',
+            './benchmark_size.py',
+        ],
+        'desc' : 'sized'
+    },
+    'runs' : [
+        { 'name' : 'htc-clang-size',
+          'arch' : 'riscv32',
+          'chip' : 'generic',
+          'board' : 'spike',
+          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
           'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
           'ldflags' : '-mabi=ilp32d',
           'path' : 'install-llvm',
@@ -222,7 +244,7 @@ hightec_rv32_llvm_opt_runset = {
     ]
 }
 hightec_rv32_gcc_opt_runset = {
-    'name' : 'HighTec RV32IMAFDC optimization comparison',
+    'name' : 'HighTec RV32GC gcc optimization comparison',
     'speed benchmark' : {
         'timeout' : 1800,
         'arglist' : [
@@ -233,7 +255,7 @@ hightec_rv32_gcc_opt_runset = {
         'desc' : 'run'
     },
     'runs' : [
-        { 'name' : 'tbd-this-run-name',
+        { 'name' : 'htc-gcc-speed',
           'arch' : 'riscv32',
           'chip' : 'generic',
           'board' : 'spike',
@@ -1394,7 +1416,8 @@ def main():
     if args.arm_gcc_version:
         runsets.append(arm_gcc_version_runset)
     if args.hightec:
-        runsets.append(hightec_rv32_llvm_opt_runset)
+        runsets.append(hightec_rv32_llvm_speed_runset)
+        runsets.append(hightec_rv32_llvm_size_runset)
     if args.hightec_gcc:
         runsets.append(hightec_rv32_gcc_opt_runset)
 
