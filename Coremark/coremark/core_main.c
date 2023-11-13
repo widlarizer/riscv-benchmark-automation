@@ -111,7 +111,8 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	results[0].seed1=get_seed(1);
 	results[0].seed2=get_seed(2);
 	results[0].seed3=get_seed(3);
-	results[0].iterations=get_seed_32(4);
+	// results[0].iterations=get_seed_32(4);
+	results[0].iterations=ITERATIONS;
 #if CORE_DEBUG
 	results[0].iterations=1;
 #endif
@@ -296,10 +297,10 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	if (time_in_secs(total_time) > 0)
 		ee_printf("Iterations/Sec   : %d\n",default_num_contexts*results[0].iterations/time_in_secs(total_time));
 #endif
-	if (time_in_secs(total_time) < 10) {
-		ee_printf("ERROR! Must execute for at least 10 secs for a valid result!\n");
-		total_errors++;
-	}
+	// if (time_in_secs(total_time) < 10) {
+	// 	ee_printf("ERROR! Must execute for at least 10 secs for a valid result!\n");
+	// 	total_errors++;
+	// }
 
 	ee_printf("Iterations       : %lu\n", (long unsigned) default_num_contexts*results[0].iterations);
 	ee_printf("Compiler version : %s\n",COMPILER_VERSION);

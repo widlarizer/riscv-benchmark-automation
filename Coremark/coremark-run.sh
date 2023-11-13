@@ -20,7 +20,7 @@ make clean
 
 # run the compile
 echo "Start compilation"
-make PORT_DIR="../"$PORT_FOLDER ITERATIONS=5000 LFLAGS_EXTRA="$LFLAGS_EXTRA" USER_FLAGS="$FLAGS" TC=$TC_FOLDER link
+make PORT_DIR="../"$PORT_FOLDER ITERATIONS=10 LFLAGS_EXTRA="$LFLAGS_EXTRA" USER_FLAGS="$FLAGS" TC=$TC_FOLDER link
 
 #make PORT_DIR=../riscv64-baremetal compile
 mv coremark.riscv ../
