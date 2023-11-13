@@ -26,4 +26,4 @@ make PORT_DIR="../"$PORT_FOLDER ITERATIONS=5000 LFLAGS_EXTRA="$LFLAGS_EXTRA" USE
 mv coremark.riscv ../
 cd ..
 echo "Start simulation (takes time)"
-spike --isa=RV32IMAFDC_Zicsr coremark.riscv
+script '-c' 'spike --isa=rv32gc_Zicsr coremark.riscv' '-e'
