@@ -1,0 +1,64 @@
+solution:
+  cdefault:
+
+  define:
+    - OS_SUPPORT_CUSTOM
+
+  packs:
+    - pack: ARM::CMSIS-DSP@1.14.2
+    - pack: ARM::CMSIS-NN@4.0.0
+    - pack: ARM::CMSIS@5.9.0
+    - pack: ARM::V2M_MPS3_SSE_300_BSP@1.3.0
+    - pack: ARM::V2M_MPS3_SSE_310_BSP@1.1.0
+    - pack: Keil::ARM_Compiler@1.7.2
+    - pack: ARM::DMA350@1.0.0
+    - pack: GorgonMeducer::perf_counter@1.9.11
+    - pack: Keil::V2M-MPS2_IOTKit_BSP@1.5.0
+    - pack: Keil::V2M-MPS2_CMx_BSP@1.8.0
+
+  target-types:
+
+    # CM85 with large TCMs
+    - type: VHT_M85
+      device: ARMCM85
+
+    - type: MPS3-Corstone-310
+      device: ARM::SSE-310-MPS3
+
+    - type: VHT-Corstone-310
+      device: ARM::SSE-310-MPS3
+
+    - type: MPS3-Corstone-300
+      device: ARM::SSE-300-MPS3
+
+    - type: VHT-Corstone-300
+      device: ARM::SSE-300-MPS3
+
+    - type: MPS2-IOTKit-CM33
+      device: ARM::IOTKit_CM33_FP
+      define:
+        - GENERIC_ARCH
+
+    - type: MPS2-CMSDK_CM4_FP
+      device: ARM::CMSDK_CM4_FP
+      define:
+        - GENERIC_ARCH
+
+    - type: MPS2-CMSDK_CM7_SP
+      device: ARM::CMSDK_CM7_SP
+      define:
+        - GENERIC_ARCH
+
+
+  build-types:
+    - type: Release
+      debug: on
+
+  projects:
+
+    - project: ./testanr/testanr.cproject.yml
+    - project: ./testaec/testaec.cproject.yml
+    - project: ./testabf/testabf.cproject.yml
+    - project: ./testkws/testkws.cproject.yml
+    - project: ./testmfcc/testmfcc.cproject.yml
+    - project: ./audiomark_app/audiomark_app.cproject.yml
