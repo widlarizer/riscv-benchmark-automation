@@ -198,7 +198,7 @@ fosdem_rv32_llvm_opt_runset = {
     ]
 }
 
-hightec_rv32_llvm_speed_runset = {
+hightec_rv32_llvm_speed_runset = lambda tools, cflags, ldflags : {
     'name' : 'HighTec RV32GC LLVM speed comparison',
     'speed benchmark' : {
         'timeout' : 1800,
@@ -214,14 +214,14 @@ hightec_rv32_llvm_speed_runset = {
           'arch' : 'riscv32',
           'chip' : 'generic',
           'board' : 'spike',
-          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
-          'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
-          'ldflags' : '-mabi=ilp32d',
+          'cc' : f'{tools}/bin/clang',
+          'cflags' : f'-O3 -march=rv32gc -mabi=ilp32d {cflags}',
+          'ldflags' : f'-mabi=ilp32d {ldflags}',
           'path' : 'install-llvm',
         },
     ]
 }
-hightec_rv32_llvm_size_runset = {
+hightec_rv32_llvm_size_runset = lambda tools, cflags, ldflags : {
     'name' : 'HighTec RV32GC LLVM size optimization comparison',
     'speed benchmark' : {
         'timeout' : 1800,
@@ -236,9 +236,9 @@ hightec_rv32_llvm_size_runset = {
           'arch' : 'riscv32',
           'chip' : 'generic',
           'board' : 'spike',
-          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
-          'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
-          'ldflags' : '-mabi=ilp32d',
+          'cc' : f'{tools}/bin/clang',
+          'cflags' : f'-O3 -march=rv32gc -mabi=ilp32d {cflags}',
+          'ldflags' : f'-mabi=ilp32d {ldflags}',
           'path' : 'install-llvm',
         },
     ]
@@ -1416,8 +1416,9 @@ def main():
     if args.arm_gcc_version:
         runsets.append(arm_gcc_version_runset)
     if args.hightec:
-        runsets.append(hightec_rv32_llvm_speed_runset)
-        runsets.append(hightec_rv32_llvm_size_runset)
+        assert os.environ.get('TOOLS') and os.environ.get('CFLAGS') and os.environ.get('LDFLAGS'), "Make sure you used `source env`"
+        runsets.append(hightec_rv32_llvm_speed_runset(os.environ['TOOLS'], os.environ['CFLAGS'], os.environ['LDFLAGS']))
+        runsets.append(hightec_rv32_llvm_size_runset(os.environ['TOOLS'], os.environ['CFLAGS'], os.environ['LDFLAGS']))
     if args.hightec_gcc:
         runsets.append(hightec_rv32_gcc_opt_runset)
 
@@ -1488,7 +1489,7 @@ def main():
                     timeout=rs['speed benchmark']['timeout'],
                     desc=rs['speed benchmark']['desc'],
                     resfile=resfile,
-                    append=True
+                    append=False
                 )
 
 

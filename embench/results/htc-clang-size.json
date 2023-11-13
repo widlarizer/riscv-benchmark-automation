@@ -1,0 +1,28 @@
+Benchmark            size
+---------            ----
+aha-mont64          30.27
+crc32              104.20
+cubic               34.21
+edn                 23.70
+huffbench           25.02
+matmult-int         63.62
+md5sum              40.40
+minver              26.59
+nbody               32.29
+nettle-aes          15.29
+nettle-sha256       10.36
+nsichneu             3.57
+picojpeg             7.38
+primecount         102.05
+qrduino              7.58
+sglib-combined      16.47
+slre                14.90
+st                  30.71
+statemate            7.97
+tarfind             62.87
+ud                  42.28
+wikisort            10.19
+---------           -----
+Geometric mean      22.79
+Geometric SD         2.38
+Geometric range     44.73
