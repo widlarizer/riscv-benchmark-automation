@@ -1,7 +1,6 @@
-set -e
+set -ex
 
-export X=~/work/llvm-project/riscv32-l64-install/
-export CC="$X/bin/clang;-march=rv32gc;-mabi=ilp32d;-I$X/riscv32/include;-L$X/riscv32/lib/rv32imafdc/ilp32d/except;-L$X/riscv32/lib/rv32imafdc/ilp32d;-I$X/riscv32/include"
+export CC="$TOOLS/bin/clang;-march=rv32gc;-mabi=ilp32d;$(echo "$CFLAGS" | tr ' ' ';');$(echo "$LDFLAGS" | tr ' ' ';')"
 mkdir -p build
 cmake -B build -DPORT_DIR=ports/riscv -GNinja -DCMAKE_C_COMPILER=$CC -DCMAKE_ASM_COMPILER=$CC
 ninja -C build
