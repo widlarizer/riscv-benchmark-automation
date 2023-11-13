@@ -74,7 +74,7 @@ ifdef SEPARATE_COMPILE
 
 LD		= $(CC)
 OBJOUT 	= -o
-LFLAGS 	=  -T$(PORT_DIR)/vanilla-spike.ld -mabi=ilp32d
+LFLAGS 	= $(LFLAGS_EXTRA) -T$(PORT_DIR)/vanilla-spike.ld -mabi=ilp32d
 OFLAG 	= -o
 COUT 	= -c
 # Flag: PORT_OBJS
