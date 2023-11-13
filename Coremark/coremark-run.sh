@@ -4,9 +4,9 @@ set -e
 
 BASEDIR=$PWD
 
-TC_FOLDER=$1
-FLAGS="-O3 -march=rv32imafdc -mabi=ilp32d -I$TC_FOLDER/riscv32/include"
-LFLAGS_EXTRA="-march=rv32imafdc -mabi=ilp32d -L$TC_FOLDER/riscv32/lib/rv32imafdc/ilp32d/except -L$TC_FOLDER/riscv32/lib/rv32imafdc"
+TC_FOLDER=$TOOLS
+FLAGS="-O3 -march=rv32imafdc -mabi=ilp32d $CFLAGS"
+LFLAGS_EXTRA="-march=rv32imafdc -mabi=ilp32d $LDFLAGS"
 
 CM_FOLDER=coremark
 PORT_FOLDER=riscv32-spike
