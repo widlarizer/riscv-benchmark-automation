@@ -20,5 +20,5 @@ popd > /dev/null
 pushd embench > /dev/null
     python3 run_all.py --hightec > run.log
     echo EmBench IoT: $(grep "Geometric mean" results/htc-clang-speed.json)
-    echo EmBench IoT: $(grep "Geometric mean" results/htc-clang-size.json)
+    echo EmBench IoT size: $(grep "Geometric mean" results/htc-clang-size.json)
 popd > /dev/null
