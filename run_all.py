@@ -7,6 +7,7 @@ import pathlib
 import shutil
 import argparse
 import json
+import git
 
 TOOLS = os.environ.get('TOOLS')
 SIZE = os.path.join(os.environ.get('SIZE', default=f'{TOOLS}/bin/llvm-size'))
@@ -98,10 +99,22 @@ def run_embench():
     csvify(speed_json.popitem()[1], "speed")
     csvify(size_json.popitem()[1], "size")
 
+def report_versions():
+    print(r(f"{TOOLS}/bin/clang --version", shell=True))
+    try:
+        repo = git.Repo(search_parent_directories=False)
+        commit_hash = repo.head.commit.hexsha
+        is_dirty = repo.is_dirty(untracked_files=False)
+        print(f"RISC-V benchmarks {commit_hash}" + ("-dirty" if is_dirty else ""))
+    except git.InvalidGitRepositoryError:
+        print("Is this a stupid copy? Please use git repos.")
+
+
 def main():
     parser = argparse.ArgumentParser(description='Example script with --header option')
     parser.add_argument('--header', action="store_true", help='Just print CSV row headers')
     args = parser.parse_args()
+    report_versions()
     if args.header:
         print("TODO")
     else:

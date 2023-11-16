@@ -4,7 +4,7 @@ Collection of benchmarks to run for the RISC-V architecture.
 
 ## Prereqs
 
-+ `lief` Python package
++ `lief` and `gitpython` Python packages
 + your clang toolchain path in `./env`
 + spike (riscv-isa-sim)
 + CMake
