@@ -31,7 +31,7 @@ def r(args, **kwargs):
     return result
 
 
-def log_size(bin, cwd):
+def dump_size(bin, cwd):
     r(f'{SIZE} {bin} > size.log', cwd=cwd, shell=True)
 
 
@@ -39,19 +39,26 @@ def rmdir(x):
     shutil.rmtree(x, ignore_errors=True)
 
 
+def extract_size_score(cwd, keyword):
+    # 3 = "dec" column in size output
+    return int(extract_score(cwd / 'size.log', keyword)[3])
+
+
 def run_audiomark():
     cwd = pathlib.Path("audiomark")
     rmdir(cwd / 'build')
     r('./build.sh', cwd=cwd, shell=True)
-    print(f'AudioMark speed,{extract_score(cwd / "run.log", "AudioMarks")[0]}')
-    log_size('build/audiomark', cwd)
+    # print(f'AudioMark speed,{extract_score(cwd / "run.log", "AudioMarks")[0]}')
+    dump_size('build/audiomark', cwd)
+    return ('AudioMark', (f'{extract_score(cwd / "run.log", "AudioMarks")[0]}', extract_size_score(cwd, 'build/audiomark')))
 
 
 def run_coremark():
     cwd = pathlib.Path("Coremark")
     r('./coremark-run.sh > run.log', cwd=cwd, shell=True)
-    print(f'CoreMark speed,{extract_score(cwd / "run.log", "CoreMark 1.0")[1]}')
-    log_size('coremark.riscv', cwd)
+    # print(f'CoreMark speed,{extract_score(cwd / "run.log", "CoreMark 1.0")[1]}')
+    # dump_size('coremark.riscv', cwd)
+    return ('CoreMark', (f'{extract_score(cwd / "run.log", "CoreMark 1.0")[1]}', extract_size_score(cwd, 'coremark.riscv')))
 
 
 def run_embench():
@@ -86,41 +93,63 @@ def run_embench():
     speed_json = json.loads(r(speed_args, cwd=cwd))
     size_json = json.loads(r(size_args, cwd=cwd))
 
-    def csvify(data, name):
+    def gather(data, name, type_):
         individual = data[f"detailed {name} results"]
-        csv_rows = [["Benchmark", name]]
-        csv_rows.append(["geometric mean", data[f"{name} geometric mean"]])
+        # gathered = [["Benchmark", name]]
+        gathered = []
+        gathered.append(("geometric mean", type_(data[f"{name} geometric mean"])))
         for benchmark, datum in individual.items():
-            csv_rows.append([benchmark, datum])
+            gathered.append([benchmark, type_(datum)])
 
-        for row in csv_rows:
-            print(','.join(map(str, row)))
+        return gathered
+        # for row in gathered: # CSV print
+        #     print(','.join(map(str, row)))
 
-    csvify(speed_json.popitem()[1], "speed")
-    csvify(size_json.popitem()[1], "size")
+    speeds = gather(speed_json.popitem()[1], "speed", float)
+    sizes = gather(size_json.popitem()[1], "size", int)
+    return ("EmBench", (speeds, sizes))
+
+
+def get_versions():
+    cc_ver = (r(f"{TOOLS}/bin/clang --version", shell=True)).splitlines()[0].split()
+    cc_hash = f"{cc_ver[5][:8]}({cc_ver[3]})"
+    repo = git.Repo(search_parent_directories=False)
+    repo_hash = repo.head.commit.hexsha[:8]
+    is_dirty = repo.is_dirty(untracked_files=False)
+    with_dirty = repo_hash + ("-dirty" if is_dirty else "")
+    return (with_dirty, cc_hash)
+
 
 def report_versions():
-    print(r(f"{TOOLS}/bin/clang --version", shell=True))
-    try:
-        repo = git.Repo(search_parent_directories=False)
-        commit_hash = repo.head.commit.hexsha
-        is_dirty = repo.is_dirty(untracked_files=False)
-        print(f"RISC-V benchmarks {commit_hash}" + ("-dirty" if is_dirty else ""))
-    except git.InvalidGitRepositoryError:
-        print("Is this a stupid copy? Please use git repos.")
+    versions = get_versions()
+    print(f"RISC-V benchmarks {versions[0]}, clang {versions[1]}")
+
+
+def run_bench(b):
+    if b == "AudioMark":
+        return run_audiomark()
+    elif b == "CoreMark":
+        return run_coremark()
+    elif b == "EmBench":
+        return run_embench()
+    else:
+        assert False, "Unreachable?"
 
 
 def main():
+    print("This main function is for testing only. Please use tui.py for interactive benchmarking or CSV output.")
     parser = argparse.ArgumentParser(description='Example script with --header option')
     parser.add_argument('--header', action="store_true", help='Just print CSV row headers')
+    parser.add_argument('bench', nargs='?', choices=speeds, help='Optional: select benchmark')
     args = parser.parse_args()
     report_versions()
     if args.header:
         print("TODO")
     else:
-        run_audiomark()
-        run_coremark()
-        run_embench()
+        benches = [args.bench] if args.bench else speeds
+        for b in benches:
+            print(run_bench(b))
+
 
 
 if __name__ == "__main__":
