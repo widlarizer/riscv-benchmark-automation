@@ -41,7 +41,7 @@ def rmdir(x):
 def run_audiomark():
     cwd = pathlib.Path("audiomark")
     rmdir(cwd / 'build')
-    r('./build.sh > run.log', cwd=cwd, shell=True)
+    r('./build.sh', cwd=cwd, shell=True)
     print(f'AudioMark speed,{extract_score(cwd / "run.log", "AudioMarks")[0]}')
     log_size('build/audiomark', cwd)
 
