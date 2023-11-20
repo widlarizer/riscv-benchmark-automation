@@ -15,7 +15,14 @@ build
 # Python things
 __pycache__/
 .pylintrc
+.venv/
 
 # Default build and log directories
 bd*/
 logs/
+
+*.o
+*.riscv
+*.log
+# script command output files - nothing to do with the language typescript
+*typescript

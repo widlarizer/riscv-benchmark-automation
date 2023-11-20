@@ -18,21 +18,15 @@ Run sets of Embench benchmarks
 
 import argparse
 import os
-import shutil
 import subprocess
 import sys
+import pathlib
 
 sys.path.append(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), 'pylib')
 )
 
 from embench_core import check_python_version
-from embench_core import log
-from embench_core import gp
-from embench_core import setup_logging
-from embench_core import log_args
-from embench_core import find_benchmarks
-from embench_core import log_benchmarks
 
 # The various sets of benchmarks we could run
 
@@ -193,75 +187,6 @@ fosdem_rv32_llvm_opt_runset = {
           'cc' : 'riscv32-unknown-elf-clang',
           'cflags' : '-march=rv32imc -mabi=ilp32 -O3',
           'ldflags' : '',
-          'path' : 'install-llvm',
-        },
-    ]
-}
-
-hightec_rv32_llvm_speed_runset = {
-    'name' : 'HighTec RV32GC LLVM speed comparison',
-    'speed benchmark' : {
-        'timeout' : 1800,
-        'arglist' : [
-            'python3',
-            './benchmark_speed.py',
-            '--target-module=run_spike',
-        ],
-        'desc' : 'run'
-    },
-    'runs' : [
-        { 'name' : 'htc-clang-speed',
-          'arch' : 'riscv32',
-          'chip' : 'generic',
-          'board' : 'spike',
-          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
-          'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
-          'ldflags' : '-mabi=ilp32d',
-          'path' : 'install-llvm',
-        },
-    ]
-}
-hightec_rv32_llvm_size_runset = {
-    'name' : 'HighTec RV32GC LLVM size optimization comparison',
-    'speed benchmark' : {
-        'timeout' : 1800,
-        'arglist' : [
-            'python3',
-            './benchmark_size.py',
-        ],
-        'desc' : 'sized'
-    },
-    'runs' : [
-        { 'name' : 'htc-clang-size',
-          'arch' : 'riscv32',
-          'chip' : 'generic',
-          'board' : 'spike',
-          'cc' : '/home/emil/work/llvm-project/riscv32-l64-install/bin/clang -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d -I/home/emil/work/llvm-project/riscv32-l64-install/riscv32/include -Wl,-L/home/emil/work/llvm-project/riscv32-l64-install/riscv32/lib/rv32imafdc/ilp32d/except',
-          'cflags' : '-O3 -march=rv32gc -mabi=ilp32d',
-          'ldflags' : '-mabi=ilp32d',
-          'path' : 'install-llvm',
-        },
-    ]
-}
-hightec_rv32_gcc_opt_runset = {
-    'name' : 'HighTec RV32GC gcc optimization comparison',
-    'speed benchmark' : {
-        'timeout' : 1800,
-        'arglist' : [
-            'python3',
-            './benchmark_speed.py',
-            '--target-module=run_spike',
-        ],
-        'desc' : 'run'
-    },
-    'runs' : [
-        { 'name' : 'htc-gcc-speed',
-          'arch' : 'riscv32',
-          'chip' : 'generic',
-          'board' : 'spike',
-          'cc' : 'riscv32-none-elf-gcc',
-          'cflags' : '-nostartfiles -nodefaultlibs -O3 -march=rv32gc -mabi=ilp32d',
-          'ldflags' : '-mabi=ilp32d',
           'path' : 'install-llvm',
         },
     ]
@@ -1359,12 +1284,7 @@ def benchmark(arglist, timeout, desc, resfile, append):
             stderr=subprocess.PIPE,
             timeout=timeout,
         )
-        if res.returncode == 0:
-            if not ('All benchmarks ' + desc +' successfully' in
-                    res.stdout.decode('utf-8')):
-                print('Warning: Not all benchmarks ' + desc + ' successfully')
-                succeeded = False
-        else:
+        if res.returncode != 0:
             print(f'Warning: {arglist_to_str(arglist)} failed')
             succeeded = False
     except subprocess.TimeoutExpired:
@@ -1374,6 +1294,7 @@ def benchmark(arglist, timeout, desc, resfile, append):
     # Dump the data if successful
     if succeeded:
         mode = 'a' if append else 'w'
+        pathlib.Path(resfile).resolve().parent.mkdir(exist_ok=True)
         with open(resfile, mode) as fileh:
             for line in res.stdout.decode('utf-8').splitlines(keepends=True):
                 if not 'All benchmarks ' + desc + ' successfully' in line:
@@ -1416,8 +1337,9 @@ def main():
     if args.arm_gcc_version:
         runsets.append(arm_gcc_version_runset)
     if args.hightec:
-        runsets.append(hightec_rv32_llvm_speed_runset)
-        runsets.append(hightec_rv32_llvm_size_runset)
+        assert os.environ.get('TOOLS') and os.environ.get('CFLAGS') and os.environ.get('LDFLAGS'), "Make sure you used `source env`"
+        runsets.append(hightec_rv32_llvm_speed_runset(os.environ['TOOLS'], os.environ['CFLAGS'], os.environ['LDFLAGS']))
+        runsets.append(hightec_rv32_llvm_size_runset(os.environ['TOOLS'], os.environ['CFLAGS'], os.environ['LDFLAGS']))
     if args.hightec_gcc:
         runsets.append(hightec_rv32_gcc_opt_runset)
 
@@ -1488,7 +1410,7 @@ def main():
                     timeout=rs['speed benchmark']['timeout'],
                     desc=rs['speed benchmark']['desc'],
                     resfile=resfile,
-                    append=True
+                    append=False
                 )
 
 
