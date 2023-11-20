@@ -22,6 +22,7 @@ You can run multiple runs, creating multiple columns. If you run out of terminal
 
 Press `m` to cycle between visualization modes. In relative modes, you can use the left and right arrow keys to select the column to use as baseline.
 
-### Dump CSV
+### Terminate and dump CSV
 
 Press `q` to close the program. This creates a file named `output.csv`.
+To terminate in the middle of benchmarks being run, you do have to hit Ctrl+C multiple times. This is because we are using the `script` command to work around an issue with spike. The first Ctrl+C is forwarded to spike, which interprets it to only terminate the program it's running internally, and drops into an interactive command line interface. The second Ctrl+C actually terminates spike.

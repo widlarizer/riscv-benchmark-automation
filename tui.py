@@ -26,44 +26,49 @@ class Tui():
     DETAILED = [Benches.EmBench]
 
     def __init__(self, stdscr):
+        # Curses setup
         curses.curs_set(0)
         self.stdscr = stdscr
         self.stdscr.clear()
+        # No data yet
         self.col = 0
         self.baseline_col = 0
         self.labels = self.init_labels()
         self.data = self.init_array(0)
         self.modes_cycle = cycle(Modes)
         self.mode = next(self.modes_cycle)
+        assert self.mode == Modes.Speed
         self.repo_version = Runner().get_versions()[0]
         self.cc_ids = []
-        assert self.mode == Modes.Speed
+        # Initial UI setup
         self.draw_array()
+        self.set_status("", help=True)
         self.stdscr.refresh()
 
     def cycle_mode(self):
         self.mode = next(self.modes_cycle)
 
     def cycle_baseline(self, right):
-        # print(self.baseline_col)
         self.baseline_col = self.baseline_col + 1 if right else self.baseline_col - 1
         self.baseline_col = max(0, min(self.baseline_col, self.col - 1))
-        # print(self.baseline_col)
 
     def draw_array(self):
-        logging.debug("draw")
-        logging.debug(self.data[self.mode.value])
         self.clear_line(0)
+        # Print mode in the corner
         self.stdscr.addstr(0, 0, f"{self.mode.name}")
+        # Print CC commit hash and options as column labels
         for j in range(self.col):
             self.stdscr.addstr(0, (j + 1) * self.WIDTH, self.cc_ids[j][0][:self.WIDTH-1]) 
-            self.stdscr.addstr(1, (j + 1) * self.WIDTH, self.cc_ids[j][1][:self.WIDTH-1]) 
+            self.stdscr.addstr(1, (j + 1) * self.WIDTH, self.cc_ids[j][1][:self.WIDTH-1])
+
         for i, row in enumerate(self.data[self.mode.value]):
+            # Print benchmark names as row labels
             self.stdscr.addstr(i + 2, 0, f"{self.labels[i]:^{self.WIDTH-1}}")
             for j, value in enumerate(row):
                 if value is not None:
                     try:
                         logging.debug(value)
+                        # Print benchmark result value
                         self.stdscr.addstr(i + 2, (j + 1) * self.WIDTH, f"{value:^{self.WIDTH-1}}")
                     except curses.error as e:
                         curses.endwin()
@@ -76,19 +81,18 @@ class Tui():
 
     def clear_line(self, line):
         _, width = self.stdscr.getmaxyx()
-        self.stdscr.addstr(line, 0, " " * width)  # Overwrite the line with spaces
+        # Overwrite the line with spaces
+        self.stdscr.addstr(line, 0, " " * width)
 
-
-    def set_status(self, status):
-
+    # Change bottom help/status line
+    def set_status(self, status, help):
         height, _ = self.stdscr.getmaxyx()
         end = height - 1
         
         self.clear_line(end - 1)
         self.stdscr.addstr(end - 1, 0, status)
-        # clear_line(end)
-        self.stdscr.addstr(end, 0, "Press q to terminate")
-
+        if help:
+            self.stdscr.addstr(end, 0, "Press q to terminate, r to run benchmarks, m to change mode")
         self.stdscr.refresh()
 
 
@@ -117,7 +121,7 @@ class Tui():
 
 
     def set_done(self, num_done):
-        self.set_status(f"Running benchmarks... {num_done}/{len(Benches)}")
+        self.set_status(f"Running benchmarks... {num_done}/{len(Benches)}", help=False)
 
 
     def update_relative(self):
@@ -134,24 +138,36 @@ class Tui():
                 rel_size_data[c] = percent(float(size_data[c]) / float(size_data[self.baseline_col]))
 
     def run_all(self):
+        # This also reloads the environment file
         runner = Runner()
+        # Include paths are boring, filter them out
         perf_opts = ' '.join(list(filter(lambda x: '-I' not in x, runner.CFLAGS.split(' '))))
         self.cc_ids.append((runner.get_versions()[1], perf_opts))
+        # New column for this run
         self.add_col()
         done = 0
+        # Initialize progress counter
         self.set_done(done)
 
+        # Run the benchmark simulations in parallel
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(runner.run_bench, b) for b in Benches.__members__]
+            # Iterate over results as we get them
             for future in concurrent.futures.as_completed(futures):
                 res = future.result()
                 if res:
                     b, (speeds, sizes) = future.result()
+                    # Get a "mutable reference" to a row (Python sucks)
                     speed_data = self.data[Modes.Speed.value][Benches[b].value]
                     size_data = self.data[Modes.Size.value][Benches[b].value]
+                    # Fill in the corresponding fields in the new column
                     if Benches[b] in self.DETAILED:
                         speed_data[self.col - 1] = speeds[0][1]
                         size_data[self.col - 1] = sizes[0][1]
+                        # logging.debug(list(zip(speeds, sizes)))
+                        # for ((sub_name, speed), (_, size)) in zip(speeds, sizes):
+                        #     name = f"{Benches[b]}_{sub_name}"
+                        #     logging.debug(f"{name}:{speed}:{size}")
                     else:
                         speed_data[self.col - 1] = speeds
                         size_data[self.col - 1] = sizes
@@ -159,8 +175,9 @@ class Tui():
                     done += 1
                     self.set_done(done)
                     self.stdscr.refresh()
+
         self.update_relative()
-        self.set_status("Done!")
+        self.set_status("Done!", help=True)
 
 
     def dump_csv(self, filename):
