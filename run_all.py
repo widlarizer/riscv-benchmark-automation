@@ -91,6 +91,7 @@ class Runner():
             'python3',
             './benchmark_size.py',
             '--json-output',
+            '--absolute',
         ]
         
         _ = r(build_args, cwd=cwd)
