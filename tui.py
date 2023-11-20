@@ -45,21 +45,26 @@ class Tui():
         self.mode = next(self.modes_cycle)
 
     def cycle_baseline(self, right):
+        # print(self.baseline_col)
         self.baseline_col = self.baseline_col + 1 if right else self.baseline_col - 1
-        self.baseline_col = max(0, min(self.baseline_col, self.col))
+        self.baseline_col = max(0, min(self.baseline_col, self.col - 1))
+        # print(self.baseline_col)
 
     def draw_array(self):
         logging.debug("draw")
         logging.debug(self.data[self.mode.value])
         self.clear_line(0)
         self.stdscr.addstr(0, 0, f"{self.mode.name}")
+        for j in range(self.col):
+            self.stdscr.addstr(0, (j + 1) * self.WIDTH, self.cc_ids[j][0][:self.WIDTH-1]) 
+            self.stdscr.addstr(1, (j + 1) * self.WIDTH, self.cc_ids[j][1][:self.WIDTH-1]) 
         for i, row in enumerate(self.data[self.mode.value]):
-            self.stdscr.addstr(i + 1, 0, f"{self.labels[i]:^{self.WIDTH-1}}")
+            self.stdscr.addstr(i + 2, 0, f"{self.labels[i]:^{self.WIDTH-1}}")
             for j, value in enumerate(row):
                 if value is not None:
                     try:
                         logging.debug(value)
-                        self.stdscr.addstr(i + 1, (j + 1) * self.WIDTH, f"{value:^{self.WIDTH-1}}")
+                        self.stdscr.addstr(i + 2, (j + 1) * self.WIDTH, f"{value:^{self.WIDTH-1}}")
                     except curses.error as e:
                         curses.endwin()
                         print("curses error, terminal probably too narrow")
@@ -119,17 +124,19 @@ class Tui():
         def percent(x):
             return f"{x:.1%}"
 
-        for b in Benches.__members__:
-            speed_data = self.data[Modes.Speed.value][Benches[b].value]
-            size_data = self.data[Modes.Size.value][Benches[b].value]
-            rel_speed_data = self.data[Modes.RelSpeed.value][Benches[b].value]
-            rel_size_data = self.data[Modes.RelSize.value][Benches[b].value]
-            rel_speed_data[self.col - 1] = percent(float(speed_data[self.col - 1]) / float(speed_data[0]))
-            rel_size_data[self.col - 1] = percent(float(size_data[self.col - 1]) / float(size_data[0]))
+        for c in range(self.col):
+            for b in Benches.__members__:
+                speed_data = self.data[Modes.Speed.value][Benches[b].value]
+                size_data = self.data[Modes.Size.value][Benches[b].value]
+                rel_speed_data = self.data[Modes.RelSpeed.value][Benches[b].value]
+                rel_size_data = self.data[Modes.RelSize.value][Benches[b].value]
+                rel_speed_data[c] = percent(float(speed_data[c]) / float(speed_data[self.baseline_col]))
+                rel_size_data[c] = percent(float(size_data[c]) / float(size_data[self.baseline_col]))
 
     def run_all(self):
         runner = Runner()
-        self.cc_ids.append(f"{runner.get_versions()[1]} with {runner.CFLAGS}")
+        perf_opts = ' '.join(list(filter(lambda x: '-I' not in x, runner.CFLAGS.split(' '))))
+        self.cc_ids.append((runner.get_versions()[1], perf_opts))
         self.add_col()
         done = 0
         self.set_done(done)
@@ -194,10 +201,12 @@ def main(stdscr):
 
         if key == curses.KEY_RIGHT:
             tui.cycle_baseline(right=True)
+            tui.update_relative()
             tui.draw_array()
 
         if key == curses.KEY_LEFT:
             tui.cycle_baseline(right=False)
+            tui.update_relative()
             tui.draw_array()
 
 if __name__ == "__main__":

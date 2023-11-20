@@ -20,7 +20,7 @@ You can run multiple runs, creating multiple columns. If you run out of terminal
 
 ### Analyze
 
-Press `m` to cycle between visualization modes.
+Press `m` to cycle between visualization modes. In relative modes, you can use the left and right arrow keys to select the column to use as baseline.
 
 ### Dump CSV
 
