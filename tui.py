@@ -247,7 +247,7 @@ class Tui():
             csv_writer = csv.writer(csvfile)
             csv_writer.writerow([f"RISC-V benchmark suite {self.repo_version}"] + self.cc_ids)
             for mode in [Modes.Speed, Modes.Size]:
-                csv_writer.writerow([self.mode])
+                csv_writer.writerow([mode])
                 mode_array = self.data[mode.value]
                 for row in mode_array:
                     csv_writer.writerow(row)
