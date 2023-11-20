@@ -1,6 +1,6 @@
-# RISC-V benchmarks investiations repo
+# RISC-V benchmark automation
 
-Collection of benchmarks to run for the RISC-V architecture.
+Collection of benchmarks to run for the RISC-V architecture, with a TUI (terminal UI) made with curses.
 
 ## Prereqs
 
@@ -9,16 +9,19 @@ Collection of benchmarks to run for the RISC-V architecture.
 + spike (riscv-isa-sim)
 + CMake
 + GNU Make
++ bash
 
-## Bash
+## Usage
 
-```bash
-source env
-```
+### Run
 
-## Fish
+Run `python3 tui.py`. Press `r` to run all benchmarks. The contents of `./env` are reloaded every time before all benchmarks are run. This means that you can change the compiler path or optimization level in CFLAGS as you need.
+You can run multiple runs, creating multiple columns. If you run out of terminal columns, the program dumps the CSV and terminates.
 
-```fish
-exec bash -c "source ./env; exec fish"
-```
+### Analyze
 
+Press `m` to cycle between visualization modes.
+
+### Dump CSV
+
+Press `q` to close the program. This creates a file named `output.csv`.

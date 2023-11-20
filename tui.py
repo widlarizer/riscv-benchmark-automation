@@ -62,6 +62,9 @@ class Tui():
                     except curses.error as e:
                         curses.endwin()
                         print("curses error, terminal probably too narrow")
+                        filename = 'output.csv' # TODO
+                        self.dump_csv(filename)
+                        print(f"Data exported to {filename}")
                         exit(1)
 
 
