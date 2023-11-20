@@ -5,6 +5,7 @@ from enum import Enum, auto
 from itertools import cycle
 import csv
 import logging
+import sys
 
 class Modes(Enum):
     Speed = auto(0)
@@ -35,7 +36,7 @@ class Tui():
         self.modes_cycle = cycle(Modes)
         self.mode = next(self.modes_cycle)
         self.repo_version = Runner().get_versions()[0]
-        self.cc_versions = []
+        self.cc_ids = []
         assert self.mode == Modes.Speed
         self.draw_array()
         self.stdscr.refresh()
@@ -128,7 +129,7 @@ class Tui():
 
     def run_all(self):
         runner = Runner()
-        self.cc_versions.append(runner.get_versions()[1])
+        self.cc_ids.append(f"{runner.get_versions()[1]} with {runner.CFLAGS}")
         self.add_col()
         done = 0
         self.set_done(done)
@@ -162,7 +163,7 @@ class Tui():
     def dump_csv(self, filename):
         with open(filename, "w", newline="") as csvfile:
             csv_writer = csv.writer(csvfile)
-            csv_writer.writerow([f"RISC-V benchmark suite {self.repo_version}"] + self.cc_versions)
+            csv_writer.writerow([f"RISC-V benchmark suite {self.repo_version}"] + self.cc_ids)
             for mode in [Modes.Speed, Modes.Size]:
                 csv_writer.writerow([self.mode])
                 mode_array = self.data[mode.value]
@@ -180,6 +181,7 @@ def main(stdscr):
             filename = 'output.csv' # TODO
             tui.dump_csv(filename)
             curses.endwin()
+            sys.stdout.flush()
             print(f"Data exported to {filename}")
             break
 
