@@ -20,6 +20,43 @@ class Benches(Enum):
     EmBench = auto()
 
 
+SUBS = {
+    "EmBench": [
+        "aha-mont64",
+        "crc32",
+        "cubic",
+        "edn",
+        "huffbench",
+        "matmult-int",
+        "md5sum",
+        "minver",
+        "nbody",
+        "nettle-aes",
+        "nettle-sha256",
+        "nsichneu",
+        "picojpeg",
+        "primecount",
+        "qrduino",
+        "sglib-combined",
+        "slre",
+        "st",
+        "statemate",
+        "tarfind",
+        "ud",
+        "wikisort",
+    ]
+}
+
+# Think of this like a constexpr even though it really isn't (Python sucks)
+def iter_subs():
+    for suite, benches in SUBS.items():
+        for bench in benches:
+            yield suite, bench
+
+
+def len_subs():
+    return sum(1 for _ in iter_subs())
+
 class Tui():
     WIDTH = 12
     # Suites with multiple executables
@@ -34,9 +71,11 @@ class Tui():
         self.col = 0
         self.baseline_col = 0
         self.labels = self.init_labels()
-        self.data = self.init_array(0)
+        self.data = self.init_array()
         self.modes_cycle = cycle(Modes)
+        self.detail_cycle = cycle(self.DETAILED)
         self.mode = next(self.modes_cycle)
+        self.detail = next(self.detail_cycle)
         assert self.mode == Modes.Speed
         self.repo_version = Runner().get_versions()[0]
         self.cc_ids = []
@@ -47,29 +86,39 @@ class Tui():
 
     def cycle_mode(self):
         self.mode = next(self.modes_cycle)
+    
+    def cycle_detail(self):
+        self.detail = next(self.detail_cycle)
 
     def cycle_baseline(self, right):
         self.baseline_col = self.baseline_col + 1 if right else self.baseline_col - 1
         self.baseline_col = max(0, min(self.baseline_col, self.col - 1))
 
     def draw_array(self):
+        l = self.WIDTH-1
         self.clear_line(0)
         # Print mode in the corner
         self.stdscr.addstr(0, 0, f"{self.mode.name}")
         # Print CC commit hash and options as column labels
         for j in range(self.col):
-            self.stdscr.addstr(0, (j + 1) * self.WIDTH, self.cc_ids[j][0][:self.WIDTH-1]) 
-            self.stdscr.addstr(1, (j + 1) * self.WIDTH, self.cc_ids[j][1][:self.WIDTH-1])
+            self.stdscr.addstr(0, (j + 1) * self.WIDTH, self.cc_ids[j][0][:l]) 
+            self.stdscr.addstr(1, (j + 1) * self.WIDTH, self.cc_ids[j][1][:l])
 
         for i, row in enumerate(self.data[self.mode.value]):
             # Print benchmark names as row labels
-            self.stdscr.addstr(i + 2, 0, f"{self.labels[i]:^{self.WIDTH-1}}")
+            self.stdscr.addstr(i + 2, 0, self.labels[i][:l])
             for j, value in enumerate(row):
                 if value is not None:
                     try:
-                        logging.debug(value)
                         # Print benchmark result value
-                        self.stdscr.addstr(i + 2, (j + 1) * self.WIDTH, f"{value:^{self.WIDTH-1}}")
+                        logging.debug(type(value))
+                        # f-strings really, really wouldn't work here
+                        str_val = ("{:" + str(l) + ".6}").format(value) if type(value) == float else str(value).rjust(l)
+                        logging.debug('_'+ str_val + '_')
+                        # We have to write the full width every time to clear the old value
+                        # TODO flush the screen instead?
+                        assert len(str_val) == l, "Formatting error"
+                        self.stdscr.addstr(i + 2, (j + 1) * self.WIDTH, str_val)
                     except curses.error as e:
                         curses.endwin()
                         print("curses error, terminal probably too narrow")
@@ -100,23 +149,30 @@ class Tui():
         labels = []
         for b in Benches.__members__:
             labels.append(b)
+        for b in iter_subs():
+            labels.append(f"{b[0][:2]}_{b[1]}")
         return labels
 
 
-    def init_array(self, cols):
-        data = [[[None]*cols for _ in Benches] for _ in Modes]
-        for mode_array in data:
-            for b in Benches.__members__:
-                for c in range(cols):
-                    mode_array[Benches[b].value][c] = '...'
+    def init_array(self):
+        return [[[] for _ in range(len(Benches) + len_subs())] for _ in Modes]
 
-        return data
+
+    def init_details(self):
+        # data = [[[None]*cols for _ in Benches] for _ in Modes]
+        # for mode_array in data:
+        #     for b in Benches.__members__:
+        #         for c in range(cols):
+        #             mode_array[Benches[b].value][c] = '...'
+        assert False
+        return []
+        # return data
 
 
     def add_col(self):
         for mode_array in self.data:
-            for b in Benches.__members__:
-                mode_array[Benches[b].value].append('...')
+            for i in range(len(Benches) + len_subs()):
+                mode_array[i].append('...')
         self.col += 1
 
 
@@ -129,11 +185,11 @@ class Tui():
             return f"{x:.1%}"
 
         for c in range(self.col):
-            for b in Benches.__members__:
-                speed_data = self.data[Modes.Speed.value][Benches[b].value]
-                size_data = self.data[Modes.Size.value][Benches[b].value]
-                rel_speed_data = self.data[Modes.RelSpeed.value][Benches[b].value]
-                rel_size_data = self.data[Modes.RelSize.value][Benches[b].value]
+            for i in range(len(Benches) + len_subs()):
+                speed_data = self.data[Modes.Speed.value][i]
+                size_data = self.data[Modes.Size.value][i]
+                rel_speed_data = self.data[Modes.RelSpeed.value][i]
+                rel_size_data = self.data[Modes.RelSize.value][i]
                 rel_speed_data[c] = percent(float(speed_data[c]) / float(speed_data[self.baseline_col]))
                 rel_size_data[c] = percent(float(size_data[c]) / float(size_data[self.baseline_col]))
 
@@ -162,12 +218,18 @@ class Tui():
                     size_data = self.data[Modes.Size.value][Benches[b].value]
                     # Fill in the corresponding fields in the new column
                     if Benches[b] in self.DETAILED:
+                        # TODO use self.detail cycle
                         speed_data[self.col - 1] = speeds[0][1]
                         size_data[self.col - 1] = sizes[0][1]
-                        # logging.debug(list(zip(speeds, sizes)))
-                        # for ((sub_name, speed), (_, size)) in zip(speeds, sizes):
-                        #     name = f"{Benches[b]}_{sub_name}"
-                        #     logging.debug(f"{name}:{speed}:{size}")
+                        for ((sub_name, speed), (_, size)) in zip(speeds, sizes):
+                            if sub_name == 'geometric mean':
+                                continue
+                            size_data[self.col - 1] = sizes[0][1]
+                            name = f"{Benches[b]}_{sub_name}"
+                            # logging.debug(f"{name}:{speed}:{size}")
+                            idx = len(Benches) + list(iter_subs()).index((Benches[b].name, sub_name))
+                            self.data[Modes.Speed.value][idx][self.col - 1] = speed
+                            self.data[Modes.Size.value][idx][self.col - 1] = size
                     else:
                         speed_data[self.col - 1] = speeds
                         size_data[self.col - 1] = sizes
@@ -210,6 +272,11 @@ def main(stdscr):
 
         if key == ord('m') or key == ord('M'):
             tui.cycle_mode()
+            tui.draw_array()
+        
+        if key == ord('d') or key == ord('D'):
+            # TODO
+            tui.cycle_detail()
             tui.draw_array()
 
         if key == curses.KEY_RIGHT:

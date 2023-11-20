@@ -54,7 +54,7 @@ class Runner():
         r('./build.sh', cwd=cwd, shell=True)
         # print(f'AudioMark speed,{extract_score(cwd / "run.log", "AudioMarks")[0]}')
         self.dump_size('build/audiomark', cwd)
-        return ('AudioMark', (f'{extract_score(cwd / "run.log", "AudioMarks")[0]}', extract_size_score(cwd, 'build/audiomark')))
+        return ('AudioMark', (extract_score(cwd / "run.log", "AudioMarks")[0], extract_size_score(cwd, 'build/audiomark')))
 
 
     def run_coremark(self):
@@ -62,7 +62,7 @@ class Runner():
         r('./coremark-run.sh > run.log', cwd=cwd, shell=True)
         # print(f'CoreMark speed,{extract_score(cwd / "run.log", "CoreMark 1.0")[1]}')
         # dump_size('coremark.riscv', cwd)
-        return ('CoreMark', (f'{extract_score(cwd / "run.log", "CoreMark 1.0")[1]}', extract_size_score(cwd, 'coremark.riscv')))
+        return ('CoreMark', (extract_score(cwd / "run.log", "CoreMark 1.0")[1], extract_size_score(cwd, 'coremark.riscv')))
 
 
     def run_embench(self):
