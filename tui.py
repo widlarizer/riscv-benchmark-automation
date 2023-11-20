@@ -9,6 +9,8 @@ import logging
 class Modes(Enum):
     Speed = auto(0)
     Size = auto()
+    RelSpeed = auto()
+    RelSize = auto()
 
 
 class Benches(Enum):
@@ -27,6 +29,8 @@ class Tui():
         self.stdscr = stdscr
         self.stdscr.clear()
         self.col = 0
+        self.baseline_col = 0
+        self.labels = self.init_labels()
         self.data = self.init_array(0)
         self.modes_cycle = cycle(Modes)
         self.mode = next(self.modes_cycle)
@@ -39,17 +43,22 @@ class Tui():
     def cycle_mode(self):
         self.mode = next(self.modes_cycle)
 
+    def cycle_baseline(self, right):
+        self.baseline_col = self.baseline_col + 1 if right else self.baseline_col - 1
+        self.baseline_col = max(0, min(self.baseline_col, self.col))
+
     def draw_array(self):
         logging.debug("draw")
         logging.debug(self.data[self.mode.value])
         self.clear_line(0)
         self.stdscr.addstr(0, 0, f"{self.mode.name}")
         for i, row in enumerate(self.data[self.mode.value]):
+            self.stdscr.addstr(i + 1, 0, f"{self.labels[i]:^{self.WIDTH-1}}")
             for j, value in enumerate(row):
                 if value is not None:
                     try:
                         logging.debug(value)
-                        self.stdscr.addstr(i + 1, j * self.WIDTH, f"{value:^{self.WIDTH-1}}")
+                        self.stdscr.addstr(i + 1, (j + 1) * self.WIDTH, f"{value:^{self.WIDTH-1}}")
                     except curses.error as e:
                         curses.endwin()
                         print("curses error, terminal probably too narrow")
@@ -74,13 +83,19 @@ class Tui():
         self.stdscr.refresh()
 
 
+    def init_labels(self):
+        labels = []
+        for b in Benches.__members__:
+            labels.append(b)
+        return labels
+
+
     def init_array(self, cols):
-        data = [[[None]*(cols+1) for _ in Benches] for _ in Modes]
+        data = [[[None]*cols for _ in Benches] for _ in Modes]
         for mode_array in data:
             for b in Benches.__members__:
-                mode_array[Benches[b].value][0] = b
                 for c in range(cols):
-                    mode_array[Benches[b].value][1+c] = '...'
+                    mode_array[Benches[b].value][c] = '...'
 
         return data
 
@@ -95,6 +110,18 @@ class Tui():
     def set_done(self, num_done):
         self.set_status(f"Running benchmarks... {num_done}/{len(Benches)}")
 
+
+    def update_relative(self):
+        def percent(x):
+            return f"{x:.1%}"
+
+        for b in Benches.__members__:
+            speed_data = self.data[Modes.Speed.value][Benches[b].value]
+            size_data = self.data[Modes.Size.value][Benches[b].value]
+            rel_speed_data = self.data[Modes.RelSpeed.value][Benches[b].value]
+            rel_size_data = self.data[Modes.RelSize.value][Benches[b].value]
+            rel_speed_data[self.col - 1] = percent(float(speed_data[self.col - 1]) / float(speed_data[0]))
+            rel_size_data[self.col - 1] = percent(float(size_data[self.col - 1]) / float(size_data[0]))
 
     def run_all(self):
         self.cc_versions.append(get_versions()[1])
@@ -113,16 +140,18 @@ class Tui():
                     speed_data = self.data[Modes.Speed.value][Benches[b].value]
                     size_data = self.data[Modes.Size.value][Benches[b].value]
                     if Benches[b] in self.DETAILED:
-                        speed_data[self.col] = speeds[0][1]
-                        size_data[self.col] = sizes[0][1]
+                        speed_data[self.col - 1] = speeds[0][1]
+                        size_data[self.col - 1] = sizes[0][1]
                     else:
-                        speed_data[self.col] = speeds
-                        size_data[self.col] = sizes
+                        speed_data[self.col - 1] = speeds
+                        size_data[self.col - 1] = sizes
+                    logging.debug(f"speeeed {speed_data[self.col - 1]},{speed_data[0]}")
+                    logging.debug(f"siiiize {size_data[self.col - 1]},{size_data[0]}")
                     self.draw_array()
                     done += 1
                     self.set_done(done)
                     self.stdscr.refresh()
-
+        self.update_relative()
         self.set_status("Done!")
 
 
@@ -130,7 +159,7 @@ class Tui():
         with open(filename, "w", newline="") as csvfile:
             csv_writer = csv.writer(csvfile)
             csv_writer.writerow([f"RISC-V benchmark suite {self.repo_version}"] + self.cc_versions)
-            for mode in Modes:
+            for mode in [Modes.Speed, Modes.Size]:
                 csv_writer.writerow([self.mode])
                 mode_array = self.data[mode.value]
                 for row in mode_array:
@@ -155,6 +184,14 @@ def main(stdscr):
 
         if key == ord('m') or key == ord('M'):
             tui.cycle_mode()
+            tui.draw_array()
+
+        if key == curses.KEY_RIGHT:
+            tui.cycle_baseline(right=True)
+            tui.draw_array()
+
+        if key == curses.KEY_LEFT:
+            tui.cycle_baseline(right=False)
             tui.draw_array()
 
 if __name__ == "__main__":
