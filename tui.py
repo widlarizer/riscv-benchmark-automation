@@ -146,9 +146,7 @@ class Tui():
             for future in concurrent.futures.as_completed(futures):
                 res = future.result()
                 if res:
-                    logging.debug(f"res {res}")
                     b, (speeds, sizes) = future.result()
-                    logging.debug(f"bench, result {Benches[b].value},{(speeds, sizes)}")
                     speed_data = self.data[Modes.Speed.value][Benches[b].value]
                     size_data = self.data[Modes.Size.value][Benches[b].value]
                     if Benches[b] in self.DETAILED:
@@ -157,8 +155,6 @@ class Tui():
                     else:
                         speed_data[self.col - 1] = speeds
                         size_data[self.col - 1] = sizes
-                    logging.debug(f"speeeed {speed_data[self.col - 1]},{speed_data[0]}")
-                    logging.debug(f"siiiize {size_data[self.col - 1]},{size_data[0]}")
                     self.draw_array()
                     done += 1
                     self.set_done(done)
