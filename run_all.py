@@ -35,14 +35,9 @@ class Runner():
 
     def update_env(self):
         bash = r("which bash", shell=True).rstrip()
-        print(bash)
         command = f'env -i {bash} -c "source ./env && env"'
-        print(command)
         for line in subprocess.getoutput(command).splitlines():
-            print(line)
             key, value = line.split("=", maxsplit=1)
-            print(key)
-            print(value)
             os.environ[key] = value
         self.TOOLS = os.environ.get('TOOLS')
         self.SIZE = os.path.join(os.environ.get('SIZE', default=f'{self.TOOLS}/bin/llvm-size'))

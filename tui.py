@@ -1,6 +1,6 @@
 import curses
 import concurrent.futures
-from run_all import run_bench, get_versions
+from run_all import Runner
 from enum import Enum, auto
 from itertools import cycle
 import csv
@@ -34,7 +34,7 @@ class Tui():
         self.data = self.init_array(0)
         self.modes_cycle = cycle(Modes)
         self.mode = next(self.modes_cycle)
-        self.repo_version = get_versions()[0]
+        self.repo_version = Runner().get_versions()[0]
         self.cc_versions = []
         assert self.mode == Modes.Speed
         self.draw_array()
@@ -124,13 +124,14 @@ class Tui():
             rel_size_data[self.col - 1] = percent(float(size_data[self.col - 1]) / float(size_data[0]))
 
     def run_all(self):
-        self.cc_versions.append(get_versions()[1])
+        runner = Runner()
+        self.cc_versions.append(runner.get_versions()[1])
         self.add_col()
         done = 0
         self.set_done(done)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(run_bench, b) for b in Benches.__members__]
+            futures = [executor.submit(runner.run_bench, b) for b in Benches.__members__]
             for future in concurrent.futures.as_completed(futures):
                 res = future.result()
                 if res:
