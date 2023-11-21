@@ -92,8 +92,8 @@ class Tui():
     def cycle_detail(self):
         self.detail = next(self.detail_cycle)
 
-    def cycle_baseline(self, right):
-        self.baseline_col = self.baseline_col + 1 if right else self.baseline_col - 1
+    def adjust_baseline(self, incr):
+        self.baseline_col = self.baseline_col + incr
         self.baseline_col = max(0, min(self.baseline_col, self.col - 1))
         self.update_relative()
 
@@ -172,7 +172,9 @@ class Tui():
         for mode_array in self.data:
             for i in range(len(Benches) + len_subs()):
                 mode_array[i].pop()
+        self.cc_ids.pop()
         self.col -= 1
+        self.adjust_baseline(0)
 
 
     def set_done(self, num_done):
@@ -311,11 +313,11 @@ def main(stdscr):
             tui.render()
 
         if key == curses.KEY_RIGHT:
-            tui.cycle_baseline(right=True)
+            tui.adjust_baseline(+1)
             tui.render()
 
         if key == curses.KEY_LEFT:
-            tui.cycle_baseline(right=False)
+            tui.adjust_baseline(-1)
             tui.render()
 
 if __name__ == "__main__":
