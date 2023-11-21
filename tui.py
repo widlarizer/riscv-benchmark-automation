@@ -3,6 +3,7 @@ import concurrent.futures
 from run_all import Runner
 from enum import Enum, auto
 from itertools import cycle
+from pathlib import Path
 import csv
 import logging
 import sys
@@ -80,8 +81,9 @@ class Tui():
         self.repo_version = Runner().get_versions()[0]
         self.cc_ids = []
         # Initial UI setup
-        self.draw_array()
-        self.set_status("", help=True)
+        self.status = ""
+        self.help = True
+        self.render()
         self.stdscr.refresh()
 
     def cycle_mode(self):
@@ -93,10 +95,12 @@ class Tui():
     def cycle_baseline(self, right):
         self.baseline_col = self.baseline_col + 1 if right else self.baseline_col - 1
         self.baseline_col = max(0, min(self.baseline_col, self.col - 1))
+        self.update_relative()
 
-    def draw_array(self):
+    def render(self):
         l = self.WIDTH-1
-        self.clear_line(0)
+        self.stdscr.clear()
+        self.draw_status()
         # Print mode in the corner
         self.stdscr.addstr(0, 0, f"{self.mode.name}")
         # Print CC commit hash and options as column labels
@@ -111,20 +115,19 @@ class Tui():
                 if value is not None:
                     try:
                         # Print benchmark result value
-                        logging.debug(type(value))
                         # f-strings really, really wouldn't work here
                         str_val = ("{:" + str(l) + ".6}").format(value) if type(value) == float else str(value).rjust(l)
-                        logging.debug('_'+ str_val + '_')
                         # We have to write the full width every time to clear the old value
                         # TODO flush the screen instead?
+                        logging.debug(str_val)
                         assert len(str_val) == l, "Formatting error"
                         self.stdscr.addstr(i + 2, (j + 1) * self.WIDTH, str_val)
                     except curses.error as e:
                         curses.endwin()
                         print("curses error, terminal probably too narrow")
-                        filename = 'output.csv' # TODO
-                        self.dump_csv(filename)
-                        print(f"Data exported to {filename}")
+                        filename = self.dump_csv()
+                        if filename:
+                            print(f"Data exported to {filename}")
                         exit(1)
 
 
@@ -134,14 +137,14 @@ class Tui():
         self.stdscr.addstr(line, 0, " " * width)
 
     # Change bottom help/status line
-    def set_status(self, status, help):
+    def draw_status(self):
         height, _ = self.stdscr.getmaxyx()
         end = height - 1
         
         self.clear_line(end - 1)
-        self.stdscr.addstr(end - 1, 0, status)
-        if help:
-            self.stdscr.addstr(end, 0, "Press q to terminate, r to run benchmarks, m to change mode")
+        self.stdscr.addstr(end - 1, 0, self.status)
+        if self.help:
+            self.stdscr.addstr(end, 0, "[q]uit [r]un [m]ode [c]sv [d]elete [←|→] change baseline")
         self.stdscr.refresh()
 
 
@@ -158,17 +161,6 @@ class Tui():
         return [[[] for _ in range(len(Benches) + len_subs())] for _ in Modes]
 
 
-    def init_details(self):
-        # data = [[[None]*cols for _ in Benches] for _ in Modes]
-        # for mode_array in data:
-        #     for b in Benches.__members__:
-        #         for c in range(cols):
-        #             mode_array[Benches[b].value][c] = '...'
-        assert False
-        return []
-        # return data
-
-
     def add_col(self):
         for mode_array in self.data:
             for i in range(len(Benches) + len_subs()):
@@ -176,8 +168,16 @@ class Tui():
         self.col += 1
 
 
+    def del_col(self):
+        for mode_array in self.data:
+            for i in range(len(Benches) + len_subs()):
+                mode_array[i].pop()
+        self.col -= 1
+
+
     def set_done(self, num_done):
-        self.set_status(f"Running benchmarks... {num_done}/{len(Benches)}", help=False)
+        self.status = f"Running benchmarks... {num_done}/{len(Benches)}"
+        self.help = False
 
 
     def update_relative(self):
@@ -233,16 +233,36 @@ class Tui():
                     else:
                         speed_data[self.col - 1] = speeds
                         size_data[self.col - 1] = sizes
-                    self.draw_array()
                     done += 1
                     self.set_done(done)
+                    self.render()
                     self.stdscr.refresh()
 
         self.update_relative()
-        self.set_status("Done!", help=True)
+        self.status = "Done!"
+        self.help = True
+        self.render()
 
 
-    def dump_csv(self, filename):
+    def dump_csv(self):
+        # No data, no dump
+        if self.col == 0:
+            return
+        # First commit hash
+        filename = self.cc_ids[0][0].split('(')[0]
+        # logging.debug(filename)
+        existing = sorted(list(Path('.').glob(f"{filename}*.csv")))
+        if existing:
+            logging.debug(existing[-1].name)
+            parts = existing[-1].name.split('.')[0].split('_')
+            idx = 0
+            assert(len(parts) <= 2)
+            if len(parts) == 2:
+                idx = int(parts[-1])
+            filename += f"_{str(idx + 1)}"
+        filename += ".csv"
+        logging.debug(f"Writing {filename}")
+
         with open(filename, "w", newline="") as csvfile:
             csv_writer = csv.writer(csvfile)
             csv_writer.writerow([f"RISC-V benchmark suite {self.repo_version}"] + self.cc_ids)
@@ -251,6 +271,7 @@ class Tui():
                 mode_array = self.data[mode.value]
                 for row in mode_array:
                     csv_writer.writerow(row)
+        return filename
 
 
 def main(stdscr):
@@ -260,11 +281,11 @@ def main(stdscr):
         stdscr.refresh()
         key = stdscr.getch()
         if key == ord('q') or key == ord('Q'):
-            filename = 'output.csv' # TODO
-            tui.dump_csv(filename)
+            filename = tui.dump_csv()
             curses.endwin()
             sys.stdout.flush()
-            print(f"Data exported to {filename}")
+            if filename:
+                print(f"Data exported to {filename}")
             break
 
         if key == ord('r') or key == ord('R'):
@@ -272,23 +293,31 @@ def main(stdscr):
 
         if key == ord('m') or key == ord('M'):
             tui.cycle_mode()
-            tui.draw_array()
+            tui.render()
         
+        # if key == ord('d') or key == ord('D'):
+        #     # TODO
+        #     tui.cycle_detail()
+        #     tui.render()
+
         if key == ord('d') or key == ord('D'):
-            # TODO
-            tui.cycle_detail()
-            tui.draw_array()
+            tui.del_col()
+            tui.render()
+
+        if key == ord('c') or key == ord('C'):
+            filename = tui.dump_csv()
+            if filename:
+                tui.status = f"Data exported to {filename}"
+            tui.render()
 
         if key == curses.KEY_RIGHT:
             tui.cycle_baseline(right=True)
-            tui.update_relative()
-            tui.draw_array()
+            tui.render()
 
         if key == curses.KEY_LEFT:
             tui.cycle_baseline(right=False)
-            tui.update_relative()
-            tui.draw_array()
+            tui.render()
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='debug.log', level=logging.DEBUG)
+    logging.basicConfig(filename='debug.log', level=logging.WARNING)
     curses.wrapper(main)

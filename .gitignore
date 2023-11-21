@@ -24,5 +24,6 @@ logs/
 *.o
 *.riscv
 *.log
+*.csv
 # script command output files - nothing to do with the language typescript
 *typescript
