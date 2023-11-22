@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+# Copyright HighTec EDV-Systeme GmbH 2023
+# SPDX-License-Identifier: BSD-1-Clause
+
 
 import os
 import subprocess

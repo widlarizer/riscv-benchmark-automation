@@ -1,3 +1,5 @@
+# Copyright HighTec EDV-Systeme GmbH 2023
+# SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0
 { pkgs ? import <nixpkgs> {} }:
   pkgs.mkShell rec {
     # nativeBuildInputs is usually what you want -- tools you need to run

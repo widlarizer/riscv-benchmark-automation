@@ -1,3 +1,6 @@
+# Copyright HighTec EDV-Systeme GmbH 2023
+# SPDX-License-Identifier: BSD-1-Clause
+
 import curses
 import concurrent.futures
 from run_all import Runner

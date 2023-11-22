@@ -1,6 +1,6 @@
 # RISC-V benchmark automation
 
-Collection of benchmarks to run for the RISC-V architecture, with a TUI (terminal UI) made with curses.
+Collection of benchmarks to run for the RISC-V architecture on Spike (riscv-isa-sim), with a TUI (terminal UI) made with curses.
 
 ## Prereqs
 
