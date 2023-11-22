@@ -202,7 +202,7 @@ class Tui():
         # This also reloads the environment file
         runner = Runner()
         # Include paths are boring, filter them out
-        perf_opts = ' '.join(list(filter(lambda x: '-I' not in x, runner.CFLAGS.split(' '))))
+        perf_opts = ' '.join(list(filter(lambda x: '-I' not in x and 'nostartfiles' not in x, runner.CFLAGS.split(' '))))
         self.cc_ids.append((runner.get_versions()[1], perf_opts))
         # New column for this run
         self.add_col()
