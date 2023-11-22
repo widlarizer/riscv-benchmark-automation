@@ -34,13 +34,11 @@ extern int errno;
 * This will execute an ebreak instruction and assume that the
 * CPU will halt or simulation environment will terminate.
 *****************************************************************/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winvalid-noreturn"
 void _exit(int i)
 {
 	asm volatile (" ebreak ");
+	__builtin_unreachable();
 }
-#pragma GCC diagnostic pop
 
 /**
 * It is assumed that there is exactly only process running and that

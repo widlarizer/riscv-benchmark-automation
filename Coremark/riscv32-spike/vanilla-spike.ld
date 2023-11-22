@@ -78,8 +78,10 @@ SECTIONS
 	{
 		. = ALIGN(0x100);
 		__bss_start__ = .;
+		__bss_start = .;
 		*(.sbss*) 			/* small data objects */
 		*(.bss*) 
+		__bss_end = .;
 		__bss_end__ = .;
 	}
 
