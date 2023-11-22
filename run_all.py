@@ -10,6 +10,7 @@ import shutil
 import argparse
 import json
 import git
+import logging
 
 def r(args, **kwargs):
     result = subprocess.check_output(args, **kwargs, text=True)
@@ -45,6 +46,7 @@ class Runner():
         self.SIZE = os.path.join(os.environ.get('SIZE', default=f'{self.TOOLS}/bin/llvm-size'))
         self.CFLAGS = os.environ.get('CFLAGS')
         self.LDFLAGS = os.environ.get('LDFLAGS')
+        self.CC = os.environ.get('CC')
 
     def dump_size(self, bin, cwd):
         r(f'{self.SIZE} {bin} > size.log', cwd=cwd, shell=True)
@@ -79,7 +81,7 @@ class Runner():
             '--arch', 'riscv32',
             '--chip=generic',
             '--board=spike',
-            f'--cc={self.TOOLS}/bin/clang',
+            f'--cc={self.CC}',
             f'--cflags=-O3 -g -ffunction-sections -fdata-sections {self.CFLAGS}',
             f'--ldflags=-Wl,--gc-sections {self.LDFLAGS}',
         ]
@@ -118,18 +120,25 @@ class Runner():
 
 
     def get_versions(self):
-        cc_ver = (r(f"{self.TOOLS}/bin/clang --version", shell=True)).splitlines()[0].split()
-        cc_hash = f"{cc_ver[5][:8]}({cc_ver[3]})"
+        cc_short_ver = ""
+        cc_ver = (r(f"{self.CC} --version", shell=True))
+        if "HighTec" in cc_ver:
+            cc_split_ver = cc_ver.splitlines()[0].split()
+            cc_short_ver = f"{cc_split_ver[5][:8]}({cc_split_ver[3]})"
+        else:
+            cc_split_ver = cc_ver.splitlines()[0].split()
+            cc_short_ver = cc_split_ver[2]
+
         repo = git.Repo(search_parent_directories=False)
         repo_hash = repo.head.commit.hexsha[:8]
         is_dirty = repo.is_dirty(untracked_files=False)
         with_dirty = repo_hash + ("-dirty" if is_dirty else "")
-        return (with_dirty, cc_hash)
+        return (with_dirty, cc_short_ver)
 
 
     def report_versions(self):
         versions = self.get_versions()
-        print(f"RISC-V benchmarks {versions[0]}, clang {versions[1]}")
+        print(f"RISC-V benchmarks {versions[0]}, CC version {versions[1]}")
 
 
     def run_bench(self, b):
