@@ -9,16 +9,16 @@ import logging
 import sys
 
 class Modes(Enum):
-    Speed = auto(0)
-    Size = auto()
-    RelSpeed = auto()
-    RelSize = auto()
+    Speed = 0
+    Size = 1
+    RelSpeed = 2
+    RelSize = 3
 
 
 class Benches(Enum):
-    AudioMark = auto(0)
-    CoreMark = auto()
-    EmBench = auto()
+    AudioMark = 0
+    CoreMark = 1
+    EmBench = 2
 
 
 SUBS = {
