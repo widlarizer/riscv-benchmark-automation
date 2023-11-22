@@ -15,14 +15,12 @@
 extern int errno;
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Winvalid-noreturn"
 void _exit(int i)
 {
     tohost_exit(i);
 	asm volatile (" ebreak ");
+	__builtin_unreachable();
 }
-#pragma GCC diagnostic pop
 
 /**
 * It is assumed that there is exactly only process running and that
