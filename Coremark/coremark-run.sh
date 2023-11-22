@@ -5,8 +5,8 @@ set -e
 BASEDIR=$PWD
 
 TC_FOLDER=$TOOLS
-FLAGS="-O3 -march=rv32imafdc -mabi=ilp32d $CFLAGS"
-LFLAGS_EXTRA="-march=rv32imafdc -mabi=ilp32d $LDFLAGS"
+FLAGS="-march=rv32imafdc -mabi=ilp32d -ffunction-sections -fdata-sections $CFLAGS"
+LFLAGS_EXTRA="-march=rv32imafdc -mabi=ilp32d -Wl,--gc-sections $LDFLAGS"
 
 CM_FOLDER=coremark
 PORT_FOLDER=riscv32-spike

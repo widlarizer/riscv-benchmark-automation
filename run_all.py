@@ -78,8 +78,8 @@ class Runner():
             '--chip=generic',
             '--board=spike',
             f'--cc={self.TOOLS}/bin/clang',
-            f'--cflags=-O3 -g {self.CFLAGS}',
-            f'--ldflags={self.LDFLAGS}',
+            f'--cflags=-O3 -g -ffunction-sections -fdata-sections {self.CFLAGS}',
+            f'--ldflags=-Wl,--gc-sections {self.LDFLAGS}',
         ]
         speed_args = [
             'python3',
