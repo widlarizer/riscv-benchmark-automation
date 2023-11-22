@@ -15,7 +15,7 @@
 extern int errno;
 
 
-void _exit(int i)
+__attribute__((__used__)) void _exit(int i)
 {
     tohost_exit(i);
 	asm volatile (" ebreak ");
@@ -27,7 +27,7 @@ void _exit(int i)
 * it does not support signals.  Therefore calling this is effectively
 * illegal and will therefore terminate the program.
 *****************************************************************/
-void _kill(int pid)
+__attribute__((__used__)) void _kill(int pid)
 {
 #if 1
 	asm volatile (" ebreak ");
@@ -43,7 +43,7 @@ void _kill(int pid)
 *
 * @return 1
 *****************************************************************/
-int _getpid(void)
+__attribute__((__used__)) int _getpid(void)
 {
   return 1;
 }
@@ -54,7 +54,7 @@ int _getpid(void)
 *
 * @return -1 Indicating that file could not be closed.
 *****************************************************************/
-int _close(int file)
+__attribute__((__used__)) int _close(int file)
 {
 	errno = EBADF;
 	return -1;
@@ -67,7 +67,7 @@ int _close(int file)
 *
 * @return 0 Indicating that the call has succeeded.
 *****************************************************************/
-int _fstat(int file, struct stat *st)
+__attribute__((__used__)) int _fstat(int file, struct stat *st)
 {
 	st->st_mode = S_IFCHR;
 	return 0;
@@ -77,7 +77,7 @@ int _fstat(int file, struct stat *st)
 *
 * @return 1 Indicating that file is a tty device (a terminal.)
 *****************************************************************/
-int _isatty(int file)
+__attribute__((__used__)) int _isatty(int file)
 {
 	return 1;
 }
@@ -87,7 +87,7 @@ int _isatty(int file)
 *
 * @return 0 Indicating that the request has succeeded.
 *****************************************************************/
-int _lseek(int file, int ptr, int dir)
+__attribute__((__used__)) int _lseek(int file, int ptr, int dir)
 {
 	return 0;
 }
@@ -97,7 +97,7 @@ int _lseek(int file, int ptr, int dir)
 *
 * @return -1 (error codition.)
 *****************************************************************/
-int _open(const char *name, int flags, int mode)
+__attribute__((__used__)) int _open(const char *name, int flags, int mode)
 {
 	errno = ENFILE;		// The system-wide limit (0) on total open files has been reached.
 	return -1;
@@ -108,7 +108,7 @@ int _open(const char *name, int flags, int mode)
 *
 * @return EOF.
 *****************************************************************/
-int _read(int file, char *ptr, int len)
+__attribute__((__used__)) int _read(int file, char *ptr, int len)
 {
 	return 0;
 }
@@ -120,7 +120,7 @@ int _read(int file, char *ptr, int len)
 *
 * @return len
 *****************************************************************/
-int _write(int file, char *ptr, int len)
+__attribute__((__used__)) int _write(int file, char *ptr, int len)
 {
 #ifdef QEMU
 	// qemu-system-riscv32 -machine virt has a 16550 at address 0x10000000
@@ -155,7 +155,7 @@ int _write(int file, char *ptr, int len)
 *	reduce the brk such that it points below _end or increase the
 *	brk to the point that it overlaps the stack.
 *****************************************************************/
-char *_sbrk (int delta)
+__attribute__((__used__)) char *_sbrk (int delta)
 {
 	extern char _end[];
 	static char *end_of_data = _end;
