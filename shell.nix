@@ -22,6 +22,9 @@
     pip install -r requirements.txt
   '';
 
+  # Necessary for lief but only since a system upgrade, somehow
+  LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
+
   # Now we can execute any commands within the virtual environment.
   # This is optional and can be left out to run pip manually.
   postShellHook = ''
