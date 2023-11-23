@@ -14,6 +14,7 @@
     # dropping into the shell
     pkgs.python3Packages.venvShellHook
 
+    pkgs.pkgsCross.riscv32-embedded.stdenv.cc
     pkgs.spike
     pkgs.dtc
  ];

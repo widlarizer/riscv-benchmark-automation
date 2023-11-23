@@ -1,3 +1,8 @@
 export TOOLS=~/work/llvm-project/riscv32-l64-install
-export CFLAGS="-I$TOOLS/riscv32/include/ -O1"
+export CC=$TOOLS/bin/clang
+export CFLAGS="-I$TOOLS/riscv32/include/ -Ofast"
 export LDFLAGS="-L$TOOLS/riscv32/lib/rv32imafdc/ilp32d/ -L$TOOLS/riscv32/lib/rv32imafdc/ilp32d/except"
+
+# export CC=riscv32-none-elf-gcc
+# export CFLAGS="-nostartfiles -Ofast"
+# export LDFLAGS="-nostartfiles"

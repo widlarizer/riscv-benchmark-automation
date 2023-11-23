@@ -30,7 +30,7 @@ RISCVTYPE=riscv32-unknown-elf
 OUTFLAG= -o
 # Flag: CC
 #	Use this flag to define compiler to use
-CC = $(TC)/bin/clang
+# CC = $(TC)/bin/clang
 # Flag: CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
 #PORT_CFLAGS = -O2 -static -std=gnu99
